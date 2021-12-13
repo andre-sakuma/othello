@@ -98,9 +98,9 @@ void imprimir(int tabuleiro[8][8]) {
     for (int j = 0; j < 8; j++) {
       int aux = tabuleiro[i][j];
       if (aux == -1) {
-        printf("[%d ] (%d;%d) ", aux, i, j);
+        printf("[%d ] ", aux);
       } else {
-        printf("[ %d ] (%d;%d) ", aux, i, j);
+        printf("[ %d ] ", aux);
       }
     }
     printf("\n");
@@ -203,15 +203,13 @@ int ver_vencedor(int tabuleiro[8][8]) {
 
 int main() {
   int tabuleiro[8][8]= {0} ;
-  inicializar(tabuleiro);
   
-  imprimir(tabuleiro);
-
   int x,y,cor;
+  printf("Digite 1 para jogar com as brancas e -1 para jogar com as pretas.\n");
   scanf("%d", &cor);
 
+  inicializar(tabuleiro);
   imprimir(tabuleiro);
-
   int vez = -1;
   int cor_pc = -1;
   if (cor == -1) cor_pc = 1;
@@ -220,8 +218,10 @@ int main() {
   // gameloop
   while(1) {
     if (tem_jogada(tabuleiro, vez) == 0) {
+      printf("Não há movimentos válidos para você. Sua vez será pulada.\n");
       troca_vez(&vez);
       if (tem_jogada(tabuleiro, vez) == 0) {
+        printf("Nenhum dos dois jogadores podem realizar um movimento, o jogo será encerrado.\n");
         vencedor = ver_vencedor(tabuleiro);
         break;
       }
@@ -251,9 +251,9 @@ int main() {
   }
 
   if (vencedor == cor) {
-    printf("você venceu!");
+    printf("você venceu!\n");
   } else {
-    printf("você perdeu!");
+    printf("você perdeu!\n");
   }
 
   return 0;
