@@ -27,35 +27,6 @@ void inicializar(int tabuleiro[8][8]) {
   }
 }
 
-void imprimir(int tabuleiro[8][8]) {
-  for (int i = 0; i < 8; i++) {
-    for (int j = 0; j < 8; j++) {
-      printf("%d ", tabuleiro[i][j]);
-    }
-    printf("\n");
-  }
-}
-
-// typedef struct Node {
-//   int l;
-//   int c;
-//   int pontos;
-//   Node *prox;
-// }Node;
-
-// // escolhe a posição para jogar
-// void escolhejogada(int tabuleiro[8][8], int cor, int *linha, int *coluna) {
-//   Node *HEAD;
-//   HEAD = malloc(sizeof (Node));
-//   HEAD->prox = NULL;
-//   Node *jogadas_possiveis = HEAD;
-
-//   int cor_oponente = 1;
-//   if (cor == 1) cor_oponente = -1;
-
-  
-// }
-
 int v_reta(int tabuleiro[8][8], int cor, int l, int c, int direcao_l, int direcao_c) {
   int i = l;
   int j = c;
@@ -109,6 +80,62 @@ int podejogar(int tabuleiro[8][8], int cor, int l, int c) {
   return 0;
 }
 
+// verifica se o jogador tem jogadas disponíveis
+int tem_jogada(int tabuleiro[8][8], int cor) {
+  for (int i = 0; i < 8; i++) {
+    for (int j = 0; j < 8; j++) {
+      if (podejogar(tabuleiro, cor, i, j)) {
+        return 1;
+      }
+    }
+  }
+  return 0;
+} 
+
+// imprime estado atual do tabuleiro
+void imprimir(int tabuleiro[8][8]) {
+  for (int i = 0; i < 8; i++) {
+    for (int j = 0; j < 8; j++) {
+      int aux = tabuleiro[i][j];
+      if (aux == -1) {
+        printf("[%d ] (%d;%d) ", aux, i, j);
+      } else {
+        printf("[ %d ] (%d;%d) ", aux, i, j);
+      }
+    }
+    printf("\n");
+  }
+}
+
+// quantidade de pontos possíveis naquela posição
+int qtd_pontos(int tabuleiro[8][8], int cor, int l, int c) {
+  int pontos = 0;
+  for (int i = -1; i <= 1; i++) {
+    for (int j = -1; j <= 1; j++) {
+      pontos += v_reta(tabuleiro, cor, l, c, i, j);
+    }
+  }
+  return pontos;
+}
+
+// escolhe a posição para jogar
+void escolhejogada(int tabuleiro[8][8], int cor, int *linha, int *coluna) {
+  int max_pontos = 0;
+
+  for (int i = 0; i < 8; i++) {
+    for (int j = 0; j < 8; j++) {
+      if (podejogar(tabuleiro, cor, i, j)) {
+        int pontos = qtd_pontos(tabuleiro, cor, i, j);
+        if (pontos > max_pontos) {
+          *linha = i;
+          *coluna = j;
+          max_pontos = pontos;
+        }
+      }
+    }
+  } 
+}
+
 void transforma_reta(int tabuleiro[8][8], int cor, int l, int c, int direcao_l, int direcao_c) {
   int i = l;
   int j = c;
@@ -123,6 +150,8 @@ void transforma_reta(int tabuleiro[8][8], int cor, int l, int c, int direcao_l, 
 
     int aux = tabuleiro[i][j];
 
+    // troca a cor do tabuleiro até encontrar a sua própria cor
+    // só é possível usar essa função se garantirmos que nessa direção é possivel fazer uma jogada
     if (aux == 0 || aux == cor) {
       break;
     }
@@ -148,6 +177,30 @@ void joga(int tabuleiro[8][8], int cor, int l, int c) {
   return;
 }
 
+void troca_vez(int *vez) {
+  if (*vez == 1) {
+    *vez = -1;
+  } else {
+    *vez = 1;
+  }
+  return;
+}
+
+// conta as peças no tabuleiro e define um vencedor
+int ver_vencedor(int tabuleiro[8][8]) {
+  int pretas = 0;
+  int brancas = 0;
+  for (int i = 0; i < 8; i++) {
+    for (int j = 0; j < 8; j++) {
+      int aux = tabuleiro[i][j];
+      if (aux == -1) pretas++;
+      if (aux == 1) brancas++;
+    }
+  }
+  if (brancas > pretas) return 1;
+  return -1;
+}
+
 int main() {
   int tabuleiro[8][8]= {0} ;
   inicializar(tabuleiro);
@@ -159,23 +212,49 @@ int main() {
 
   imprimir(tabuleiro);
 
+  int vez = -1;
+  int cor_pc = -1;
+  if (cor == -1) cor_pc = 1;
+  int vencedor = 0;
+
   // gameloop
   while(1) {
-    if (cor == 1) cor = -1;
-    else if (cor == -1) cor = 1;
+    if (tem_jogada(tabuleiro, vez) == 0) {
+      troca_vez(&vez);
+      if (tem_jogada(tabuleiro, vez) == 0) {
+        vencedor = ver_vencedor(tabuleiro);
+        break;
+      }
+    }
+    if (vez == cor) {
+      printf("sua vez\n");
+      scanf("%d %d", &x, &y);
+    } else {
+      printf("vez do oponente\n");
+      escolhejogada(tabuleiro, cor_pc, &x, &y);
+    }
 
-    printf("vez da cor %d\n", cor);
-
-    scanf("%d %d", &x, &y);
-    if (x == -1 && y == -1) break;
-
-    int pode_jogar = podejogar(tabuleiro, cor, x, y);
-    printf("%d\n", pode_jogar);
+    int pode_jogar = podejogar(tabuleiro, vez, x, y);
 
     if (pode_jogar == 1) {
-      joga(tabuleiro, cor, x, y);
+      joga(tabuleiro, vez, x, y);
+    } else {
+      if (vez == 1) {
+        vencedor = -1;
+      } else {
+        vencedor = 1;
+      }
+      break;
     }
     imprimir(tabuleiro);
+    troca_vez(&vez);
   }
+
+  if (vencedor == cor) {
+    printf("você venceu!");
+  } else {
+    printf("você perdeu!");
+  }
+
   return 0;
 }
